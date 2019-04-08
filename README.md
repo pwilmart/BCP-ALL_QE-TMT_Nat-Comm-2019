@@ -11,7 +11,7 @@
 
 ### Paper Overview
 
-The paper is comparing samples from pediatric B-cell precursor acute lymphoblastic leukemia (BCP ALL) that were labeled with 10-plex TMT and analyzed on a Q-Exactive instrument. There were two leukemia conditions: high hyperdiploid (18 samples) and diploid/near-diploid ETV6/RUNX1-positive cases (9 samples). Samples were allocated in a balanced design with 6 and 3 samples per 10-plex, respectively. A pooled standard sample was also created and added to each plex (131N channel). Three 10-plex experiments were used to accommodate the 27 samples.
+The [paper](https://www.nature.com/articles/s41467-019-09469-3) is comparing samples from pediatric B-cell precursor acute lymphoblastic leukemia (BCP ALL) that were labeled with 10-plex TMT and analyzed on a Q-Exactive instrument. There were two leukemia conditions: high hyperdiploid (18 samples) and diploid/near-diploid ETV6/RUNX1-positive cases (9 samples). Samples were allocated in a balanced design with 6 and 3 samples per 10-plex, respectively. A pooled standard sample was also created and added to each plex (131N channel). Three 10-plex experiments were used to accommodate the 27 samples.
 
 Digestion was via an eFASP protocol, peptide cleanup with an sp3 method, and TMT labeling was according to manufacturer's recommendations.
 
@@ -23,15 +23,15 @@ Each plex was first separated into 72 fractions by isoelectric point and each fr
 
 ### Re-analysis Overview
 
-The 216 QE RAW files were downloaded and converted to MS2 file format using MSConvert and the script from the PAW pipeline. There were about 1.4 million spectra per TMT 10-plex for a total of 4.3 million MS2 spectra. A basic TMT processing was done in the PAW pipeline using:
-- wider tolerance Comet searches
-- canonical UniProt human reference proteome (20764 sequences including contams)
+The [216 QE RAW files](https://www.ebi.ac.uk/pride/archive/projects/PXD010175) were downloaded and converted to MS2 file format using [MSConvert](http://proteowizard.sourceforge.net/) and the script from the [PAW pipeline](https://github.com/pwilmart/PAW_pipeline.git). There were about 1.4 million spectra per TMT 10-plex for a total of 4.3 million MS2 spectra. A basic TMT processing was done in the [PAW pipeline](https://github.com/pwilmart/PAW_pipeline.git) using:
+- wider tolerance [Comet](http://comet-ms.sourceforge.net/) searches
+- canonical UniProt human [reference proteome](https://github.com/pwilmart/fasta_utilities.git) (20764 sequences including contams)
 - accurate mass conditioned score histograms
 - target/decoy FDR method by peptide classes
 - parsimonious protein inference with 2 peptides per protein
 - homologous protein grouping
 - quantification at the protein level using summed reporter ions
-- statistical analysis in R using edgeR
+- [Jupyter notebook](https://jupyter.org/) statistical analysis in R using [edgeR](http://bioconductor.org/packages/release/bioc/html/edgeR.html)
 
 ---
 
