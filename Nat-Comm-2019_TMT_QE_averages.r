@@ -328,7 +328,7 @@ top_tags <- topTags(et, n = 50)$table$genes
 plot_top_tags(candidates, length(HeH), length(ETV6), top_tags)
 set_plot_dimensions(width, height)
 
-write.table(results, "IRS_R_results.txt", sep = "\t",
+write.table(results, "IRS_R_averages_results.txt", sep = "\t",
            row.names = FALSE, na =  " ")
 
 sessionInfo()
