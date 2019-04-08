@@ -51,8 +51,8 @@ The starting data for the re-analysis is the data used in the paper and briefly 
 - sample processing, fractionation, and mass spec settings are in the publication
 - Ensembl human protein database used
   - very complete so lots of peptide redundancy
--  MS2 scans acquired at 35K resolution
-  - maybe a little low (>50K is better) to completely resolve N- and C-forms
+- MS2 scans acquired at 35K resolution
+  - maybe >50K is better to completely resolve N- and C-forms
 - search engine was MSGF+
   - 10 ppm parent mass tolerance
   - other parameters appropriate for basic TMT experiment
@@ -124,7 +124,7 @@ The starting data for the re-analysis is the data used in the paper and briefly 
 
 ### Some interesting things
 
-PSM identifications (1% FDR). PAW pipeline had 80% more identified PSMs
+PSM identifications (1% FDR). PAW pipeline had 80% more identified PSMs. This is a large factor and it is not clear what might be the cause (maybe the PSM numbers in the paper are not correct?).
 
 |Plex|Publication|PAW Analysis|
 |----|-----------|------------|
@@ -141,7 +141,7 @@ The single pooled standard was noisier that the plex-wide averages for the IRS p
 
 ---
 
-## summary
+## Summary
 
 - This is a deep dive into the cancer B-cell proteome with almost 50% of the reference proteome detected
 - The TMT data from the QE for this experiment looked okay
