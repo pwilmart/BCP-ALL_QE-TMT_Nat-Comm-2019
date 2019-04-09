@@ -124,7 +124,7 @@ The starting data for the re-analysis is the data used in the paper and briefly 
 
 ### Some interesting things
 
-PSM identifications (1% FDR). PAW pipeline had 80% more identified PSMs. This is a large factor and it is not clear what might be the cause (maybe the PSM numbers in the paper are not correct?).
+PSM identifications (1% FDR): PAW pipeline seemed to have 80% more identified PSMs than the numbers of identified PSMs listed in the paper's Supplemental file. This is a large factor and it seems too good to be true.
 
 |Plex|Paper Supp. File|PSM file from PRIDE|PAW Analysis|
 |----|-----------|------------|------|
@@ -133,7 +133,7 @@ PSM identifications (1% FDR). PAW pipeline had 80% more identified PSMs. This is
 |C|191K|386K|352K|
 |Total|645K|1293K|1166K|
 
-Note: the numbers of identified PSMs in the Supplemental file of the paper did not look right. There was a PSM results table in the PRIDE archive along with the RAW files. That was processed to count PSMs and those number were added to the table above. These look better. MSGF+ is considered a very good performing search engine and Percolator is a good classifier. Now, the result is that PAW PSM identification number was 90%.
+The numbers of identified PSMs in the Supplemental file of the paper (645K) did not look right. There was a PSM results table in the PRIDE archive along with the RAW files. That was processed to count PSMs and those number were added to the table above. The 1.29 million PSM number looks better. MSGF+ is considered a very good performing search engine and Percolator is a good classifier. Now, the correct result is that the PAW PSM identification number was less than the paper's number (90% of their number).
 
 It is always tricky to know if counting of things for comparisons are being done under the exact same conditions. There are lots of little filters (charge states, peptide lengths, enzymatic status, etc.) that can be done at many points in pipelines. The number of unique peptides reported in the paper was 175K. The PAW number at the step where reporter ions are summed to protein totals was 172K.
 
