@@ -96,11 +96,11 @@ print("Combined (lib size and TMM) normalization factors")
 round(norm_facs, 4)
 
 # compute the normalized data as a new data frame
-results <- sweep(irs, 2, norm_facs, FUN = "*")
-colnames(results) <- str_c(colnames(results), "_TMMnorm") # add suffix to col names
+irs_tmm <- sweep(irs, 2, norm_facs, FUN = "*")
+colnames(irs_tmm) <- str_c(colnames(irs), "_TMMnorm") # add suffix to col names
 # head(results) # check that the column headers are okay
 
-long_results <- gather(results, key = "sample", value = "intensity") %>%
+long_results <- gather(irs_tmm, key = "sample", value = "intensity") %>%
   mutate(log_int = log10(intensity)) %>%
   extract(sample, into = 'group', ".*?_(.*?)_", remove = FALSE)
 head(long_results)
@@ -111,7 +111,7 @@ ggplot(long_results, aes(x = sample, y = log_int, fill = group)) +
   ggtitle("edgeR normalized data")
 
 # look at normalized intensity distributions for each sample
-boxplot(log10(results), col = colors,
+boxplot(log10(irs_tmm), col = colors,
         xlab = 'TMT samples', ylab = 'log10 Intensity', 
         main = 'edgeR normalized data', notch = TRUE)
 
@@ -136,8 +136,8 @@ CV <- function(df) {
 }
 
 # put CVs in data frames to simplify plots and summaries
-cv_frame <- data.frame(HeH.sl = CV(sl[HeH]), HeH.final = CV(results[HeH]), 
-                       ETV6.sl = CV(sl[ETV6]), ETV6.final = CV(results[ETV6]))
+cv_frame <- data.frame(HeH.sl = CV(sl[HeH]), HeH.final = CV(irs_tmm[HeH]), 
+                       ETV6.sl = CV(sl[ETV6]), ETV6.final = CV(irs_tmm[ETV6]))
 
 
 # see what the median CV values are
@@ -179,7 +179,7 @@ summary(decideTestsDGE(et, p.value = 0.10))
 
 # the topTags function adds the BH FDR values to an exactTest data frame 
 # make sure we do not change the row order (the sort.by parameter)!
-topTags(et, n = 50)
+topTags(et, n = 25)
 tt <- topTags(et, n = Inf, sort.by = "none")
 tt <- tt$table    # tt is a list. We just need the "table" data frame
 
@@ -196,8 +196,8 @@ ggplot(tt, aes(PValue)) +
 
 # get the averages within each condition 
 # results already has the normalized data in its left columns
-tt$ave_HeH <- rowMeans(results[HeH])
-tt$ave_ETV6 <- rowMeans(results[ETV6])
+tt$ave_HeH <- rowMeans(irs_tmm[HeH])
+tt$ave_ETV6 <- rowMeans(irs_tmm[ETV6])
 
 # add the cadidate status column
 tt <- tt %>%
@@ -212,76 +212,152 @@ ggplot(tt, aes(x = logFC, fill = candidate)) +
   coord_cartesian(xlim = c(-4, 4)) +
   ggtitle("HeH vs ETV6-RUNX1 logFC distributions by candidate")
 
-# make column names unique by adding comparison
-tt_temp  <- tt
-colnames(tt_temp) <- str_c(colnames(tt), "_HE")
+# ================= reformat edgeR test results ================================
 
-# add the testing results
-results <- cbind(results, tt_temp)
-
-de_plots <- function(tt, x, y, title) {
-  temp <- data.frame(log10((tt[x] + tt[y])/2), 
-                     log2(tt[y] / tt[x]), 
-                     tt$candidate,
-                     -log10(tt$FDR))
-  colnames(temp) <- c("A", "M", "candidate", "P")
+collect_results <- function(df, tt, x, xlab, y, ylab) {
+    # Computes new columns and extracts some columns to make results frame
+        # df - data in data.frame
+        # tt - top tags table from edgeR test
+        # x - columns for first condition
+        # xlab - label for x
+        # y - columns for second condition
+        # ylab - label for y
+        # returns a new dataframe
     
-  ma_lines <- list(geom_hline(yintercept = 0.0, color = "black"),
-                   geom_hline(yintercept = 1.0, color = "black", linetype = "dotted"),
-                   geom_hline(yintercept = -1.0, color = "black", linetype = "dotted"))
+    # condition average vectors
+    ave_x <- rowMeans(df[x])
+    ave_y <- rowMeans(df[y])
+    
+    # FC, direction, candidates
+    fc <- ifelse(ave_y > ave_x, (ave_y / ave_x), (-1 * ave_x / ave_y))
+    direction <- ifelse(ave_y > ave_x, "up", "down")
+    candidate <- cut(tt$FDR, breaks = c(-Inf, 0.01, 0.05, 0.10, 1.0), 
+                     labels = c("high", "med", "low", "no"))
+    
+    # make data frame
+    temp <- cbind(df[c(x, y)], data.frame(logFC = tt$logFC, FC = fc, 
+                                          PValue = tt$PValue, FDR = tt$FDR, 
+                                          ave_x = ave_x, ave_y = ave_y, 
+                                          direction = direction, candidate = candidate, 
+                                          Acc = tt$genes)) 
+    
+    # fix column headers for averages
+    names(temp)[names(temp) %in% c("ave_x", "ave_y")]  <- str_c("ave_", c(xlab, ylab))    
+    
+    temp # return the data frame
+}
 
+# get the results
+results <- collect_results(irs, tt, HeH, "HeH", ETV6, "ETV6")
+
+transform <- function(results, x, y) {
+    # Make data frame with some transformed columns
+        # results - results data frame
+        # x - columns for x condition
+        # y - columns for y condition
+        # return new data frame
+    df <- data.frame(log10((results[x] + results[y])/2), 
+                     log2(results[y] / results[x]), 
+                     results$candidate,
+                     -log10(results$FDR))
+    colnames(df) <- c("A", "M", "candidate", "P")
+    
+    df # return the data frame
+}
+
+MA_plots <- function(results, x, y, title) {
+    # makes MA-plot DE candidate ggplots
+        # results - data frame with edgeR results and some condition average columns
+        # x - string for x-axis column
+        # y - string for y-axis column
+        # title - title string to use in plots
+        # returns a list of plots 
+    
+    # uses transformed data
+    temp <- transform(results, x, y)
+    
+    # 2-fold change lines
+    ma_lines <- list(geom_hline(yintercept = 0.0, color = "black"),
+                     geom_hline(yintercept = 1.0, color = "black", linetype = "dotted"),
+                     geom_hline(yintercept = -1.0, color = "black", linetype = "dotted"))
+
+    # make main MA plot
+    ma <- ggplot(temp, aes(x = A, y = M)) +
+        geom_point(aes(color = candidate, shape = candidate)) +
+        scale_y_continuous(paste0("logFC (", y, "/", x, ")")) +
+        scale_x_continuous("Ave_intensity") +
+        ggtitle(title) + 
+        ma_lines
+    
+    # make separate MA plots
+    ma_facet <- ggplot(temp, aes(x = A, y = M)) +
+        geom_point(aes(color = candidate, shape = candidate)) +
+        scale_y_continuous(paste0("log2 FC (", y, "/", x, ")")) +
+        scale_x_continuous("log10 Ave_intensity") +
+        ma_lines +
+        facet_wrap(~ candidate) +
+        ggtitle(str_c(title, " (separated)"))
+
+    # make the plots visible
+    print(ma)
+    print(ma_facet)
+}    
+
+scatter_plots <- function(results, x, y, title) {
+    # makes scatter-plot DE candidate ggplots
+        # results - data frame with edgeR results and some condition average columns
+        # x - string for x-axis column
+        # y - string for y-axis column
+        # title - title string to use in plots
+        # returns a list of plots
+    
+    # 2-fold change lines
     scatter_lines <- list(geom_abline(intercept = 0.0, slope = 1.0, color = "black"),
                           geom_abline(intercept = 0.301, slope = 1.0, color = "black", linetype = "dotted"),
                           geom_abline(intercept = -0.301, slope = 1.0, color = "black", linetype = "dotted"),
                           scale_y_log10(),
                           scale_x_log10())
-    
-  # make main MA plot
-  first  <- ggplot(temp, aes(x = A, y = M)) +
-    geom_point(aes(color = candidate, shape = candidate)) +
-    scale_y_continuous(paste0("logFC (", y, "/", x, ")")) +
-    scale_x_continuous("Ave_intensity") +
-    ggtitle(title) + 
-    ma_lines
-    
-  # make separate MA plots
-  second <- ggplot(temp, aes(x = A, y = M)) +
-    geom_point(aes(color = candidate, shape = candidate)) +
-    scale_y_continuous(paste0("log2 FC (", y, "/", x, ")")) +
-    scale_x_continuous("log10 Ave_intensity") +
-    ma_lines +
-    facet_wrap(~ candidate) +
-    ggtitle(str_c(title, " (separated)"))
 
-  # make main scatter plot
-  third <- ggplot(tt, aes_string(x, y)) +
-    geom_point(aes(color = candidate, shape = candidate)) +
-    ggtitle(title) + 
-    scatter_lines
+    # make main scatter plot
+    scatter <- ggplot(results, aes_string(x, y)) +
+        geom_point(aes(color = candidate, shape = candidate)) +
+        ggtitle(title) + 
+        scatter_lines
 
-  # make separate scatter plots
-  fourth <- ggplot(tt, aes_string(x, y)) +
-    geom_point(aes(color = candidate, shape = candidate)) +
-    scatter_lines +
-    facet_wrap(~ candidate) +
-    ggtitle(str_c(title, " (separated)")) 
+    # make separate scatter plots
+    scatter_facet <- ggplot(results, aes_string(x, y)) +
+        geom_point(aes(color = candidate, shape = candidate)) +
+        scatter_lines +
+        facet_wrap(~ candidate) +
+        ggtitle(str_c(title, " (separated)")) 
 
-  # make volcano plot
-  fifth <- ggplot(temp, aes(x = M, y = P)) +
-    geom_point(aes(color = candidate, shape = candidate)) +
-    xlab("log2 FC") +
-    ylab("-log10 FDR") +
-    ggtitle(str_c(title, " Volcano Plot"))
+    # make the plots visible
+    print(scatter)
+    print(scatter_facet)
+}
+
+volcano_plot <- function(results, x, y, title) {
+    # makes a volcano plot
+        # results - a data frame with edgeR results
+        # x - string for the x-axis column
+        # y - string for y-axis column
+        # title - plot title string
     
-  print(first)
-  print(second)
-  print(third)
-  print(fourth)
-  print(fifth)
+    # uses transformed data
+    temp <- transform(results, x, y)
+    
+    # build the plot
+    ggplot(temp, aes(x = M, y = P)) +
+        geom_point(aes(color = candidate, shape = candidate)) +
+        xlab("log2 FC") +
+        ylab("-log10 FDR") +
+        ggtitle(str_c(title, " Volcano Plot"))
 }
 
 # make the DE plots
-de_plots(tt, "ave_HeH", "ave_ETV6", "HeH vs ETV6-RUNX1")
+MA_plots(results, "ave_HeH", "ave_ETV6", "HeH vs ETV6/RUNX1")
+scatter_plots(results, "ave_HeH", "ave_ETV6", "HeH vs ETV6/RUNX1")
+volcano_plot(results, "ave_HeH", "ave_ETV6", "HeH vs ETV6/RUNX1")
 
 # ============== individual protein expression plots ===========================
 
@@ -295,37 +371,41 @@ set_plot_dimensions <- function(width_choice, height_choice) {
     options(repr.plot.width=width_choice, repr.plot.height=height_choice)
 }
 
-plot_top_tags <- function(proteins, nleft, nright, top_tags) {
-    num_col <- ncol(proteins)
-    top_identifiers <- get_identifier(top_tags)
-    proteins <- proteins %>% 
-        filter(identifier %in% top_identifiers) %>% 
+plot_top_tags <- function(results, nleft, nright, top_tags) {
+    # results should have data first, then test results (two condition summary table)
+    # nleft, nright are number of data points in each condition
+    # top_tags is number of up and number of down top DE candidates to plot
+    # get top ipregulated
+    up <- results %>% 
+        filter(logFC >= 0) %>%
         arrange(FDR)
+    up <- up[1:top_tags, ]
+    
+    # get top down regulated
+    down <- results %>% 
+        filter(logFC < 0) %>%
+        arrange(FDR)
+    down <- down[1:top_tags, ]
+    
+    # pack them into one data frame
+    proteins <- rbind(up, down)
         
     color = c(rep("red", nleft), rep("blue", nright))
     for (row_num in 1:nrow(proteins)) {
         row <- proteins[row_num, ]
-        vec <- as.vector(unlist(row[4:num_col]))
-        names(vec) <- colnames(row[4:num_col])
-        if(row$logFC < 0) {
-            FC <- -(1/(2^row$logFC))
-        } else {
-            FC <- 2^row$logFC
-        }
-        title <- str_c(row$identifier, ", int: ", scientific(mean(vec), digits = 2), 
-                       ", p-val: ", scientific(row$FDR, digits = 2), 
-                       ", FC: ", round(FC, digits = 1))
+        vec <- as.vector(unlist(row[1:(nleft + nright)]))
+        names(vec) <- colnames(row[1:(nleft + nright)])
+        title <- str_c(get_identifier(row$Acc), ", int: ", scientific(mean(vec), 2), 
+                       ", p-val: ", scientific(row$FDR, digits = 3), 
+                       ", FC: ", round(row$FC, digits = 1))
         barplot(vec, col = color, main = title)
     }    
 }
 
-# set up data frame
-set_plot_dimensions(6, 4)
-candidates <- data.frame(identifier = get_identifier(tt$genes), logFC = tt$logFC, 
-                       FDR = tt$FDR, results[HeH], results[ETV6])
 
-top_tags <- topTags(et, n = 50)$table$genes                       
-plot_top_tags(candidates, length(HeH), length(ETV6), top_tags)
+# set plot size, make plots, reset plot size
+set_plot_dimensions(6, 4)                      
+plot_top_tags(results, length(HeH), length(ETV6), 25)
 set_plot_dimensions(width, height)
 
 write.table(results, "IRS_R_pools_results.txt", sep = "\t",
