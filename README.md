@@ -110,9 +110,9 @@ The starting data for the re-analysis is the data used in the paper and briefly 
 - quantification at the protein level using summed reporter ions
   - only PSMs from peptides unique to final protein list are used
   - reporter ions summed into protein totals per plex before any normalizations
-- Internal reference scaling method used to match intensities between plexes
+- [Internal reference scaling](https://github.com/pwilmart/IRS_validation.git) method used to match intensities between plexes
   - internal reference channels can be used (better if more than one)
-  - plex-wide average can be used in balanced study designs
+  - plex-wide average can be [used](https://github.com/pwilmart/IRS_normalization.git) in balanced study designs
 - statistical analysis in R using edgeR
   - supports common study designs
   - has nice built-in normalization (TMM)
