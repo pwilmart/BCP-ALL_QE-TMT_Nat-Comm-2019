@@ -126,16 +126,20 @@ The starting data for the re-analysis is the data used in the paper and briefly 
 
 PSM identifications (1% FDR). PAW pipeline had 80% more identified PSMs. This is a large factor and it is not clear what might be the cause (maybe the PSM numbers in the paper are not correct?).
 
-|Plex|Publication|PAW Analysis|
-|----|-----------|------------|
-|A|237K|409K|
-|B|217K|404K|
-|C|191K|352K|
-|Total|645K|1166K|
+|Plex|Paper Supp. File|PSM file from PRIDE|PAW Analysis|
+|----|-----------|------------|------|
+|A|237K|461K|409K|
+|B|217K|447K|404K|
+|C|191K|386K|352K|
+|Total|645K|1293K|1166K|
 
-Most additional PSMs will end up mapping to peptides and proteins that already have detection evidence. It is always tricky to know if counting of things for comparisons are being done under the exact same conditions. There are lots of little filters (charge states, peptide lengths, enzymatic status, etc.) that can be done at many points in pipelines. The number of unique peptides reported in the paper was 175K. The PAW number at the step where reporter ions are summed to protein totals was 172K.
+Note: the numbers of identified PSMs in the Supplemental file of the paper did not look right. There was a PSM results table in the PRIDE archive along with the RAW files. That was processed to count PSMs and those number were added to the table above. These look better. MSGF+ is considered a very good performing search engine and Percolator is a good classifier. Now, the result is that PAW PSM identification number was 90%.
 
-Protein numbers are also an apples-to-oranges situation. There were different protein databases and summarization methods used. These factors affect the union of the protein IDs more strongly that they affect the intersection of identifications across the three plexes. The paper had 8480 quantifiable proteins seen in all samples. There were 8756 quantifiable proteins with the PAW processing.
+It is always tricky to know if counting of things for comparisons are being done under the exact same conditions. There are lots of little filters (charge states, peptide lengths, enzymatic status, etc.) that can be done at many points in pipelines. The number of unique peptides reported in the paper was 175K. The PAW number at the step where reporter ions are summed to protein totals was 172K.
+
+Protein numbers are also an apples-to-oranges situation. There were different protein databases and summarization methods used. These factors affect the union of the protein IDs more strongly that they affect the intersection of identifications across the three plexes. Observation in all three plexes is a noise filter that removes some of the lowest abundance proteins. That will tighten up the protein FDRs and improve comparisons. The paper had 8480 quantifiable proteins seen in all samples. There were 8756 quantifiable proteins with the PAW processing.
+
+The numbers of differential candidates were also a little different. The paper has 1286 up regulated and 1127 down regulated proteins at 5% FDR. The PAW edgeR results using reporter ions in their natural intensity scale rather than as transformed ratios, had 962 and 970 at a 10% FDR. Statistical testing p-values, multiple testing correction methods, and the numbers of DE candidates at arbitrary cutoffs are much more dynamic that people realize. To me, the agreement looks pretty good. These are one-protein-at-a-time DE assessments. Most biological processes involve more than one protein. Biological interpretation of differential expression needs to be done with sets of proteins. We have very few, very primitive tools for this currently.
 
 The single pooled standard was noisier that the plex-wide averages for the IRS procedure. Protein coefficients of variation (CVs) were better and the statistical testing produced a small increase in candidates when the averages were used instead of the single common channel.
 
