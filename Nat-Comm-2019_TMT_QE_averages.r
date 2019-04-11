@@ -136,8 +136,8 @@ CV <- function(df) {
 }
 
 # put CVs in data frames to simplify plots and summaries
-cv_frame <- data.frame(HeH.sl = CV(sl[HeH]), HeH.final = CV(irs_tmm[HeH]), 
-                       ETV6.sl = CV(sl[ETV6]), ETV6.final = CV(irs_tmm[ETV6]))
+cv_frame <- data.frame(HeH_sl = CV(sl[HeH]), HeH_final = CV(irs_tmm[HeH]), 
+                       ETV6_sl = CV(sl[ETV6]), ETV6_final = CV(irs_tmm[ETV6]))
 
 
 # see what the median CV values are
@@ -148,7 +148,7 @@ round(medians, 1)
 # see what the CV distibutions look like
 # need long form for ggplot
 long_cv <- gather(cv_frame, key = "condition", value = "cv") %>%
-  extract(condition, into = 'group', "(.*?)\\.+", remove = FALSE)
+  extract(condition, into = 'group', "(.*?)_+", remove = FALSE)
 
 # traditional boxplots
 cv_plot <- ggplot(long_cv, aes(x = condition, y = cv, fill = group)) +
@@ -402,7 +402,7 @@ plot_top_tags <- function(results, nleft, nright, top_tags) {
     }    
 }
 
-# set up data frame
+# set plot size, make plots, reset plot size
 set_plot_dimensions(6, 4)                      
 plot_top_tags(results, length(HeH), length(ETV6), 25)
 set_plot_dimensions(width, height)
